@@ -17,7 +17,7 @@ htmlcov/
 
 # Demo outputs written to the working directory
 *_preview.png
-fig3_ion_images/
+fig4_panels/
 
 # Data (download from Zenodo; do not commit)
 *.txt.gz
@@ -30,6 +30,3 @@ fig3_ion_images/
 Thumbs.db
 .vscode/
 .idea/
-
-# Maintainer notes (not for the public repository)
-RELEASE_STEPS.md

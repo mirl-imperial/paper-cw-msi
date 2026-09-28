@@ -11,31 +11,15 @@ authors:
     given-names: William J. C.
   - family-names: Micic
     given-names: Milena
-  - family-names: Noyes
-    given-names: Lucy
   - family-names: Blair
     given-names: David
   - family-names: Chauvet
     given-names: Anna
-  - family-names: Song
-    given-names: Yayue
-  - family-names: Ford
-    given-names: Lauren
-  - family-names: Maneta-Stavrakaki
-    given-names: Stefania
-  - family-names: Simon
-    given-names: Dániel
-  - family-names: Bitharas
-    given-names: Ioannis
-  - family-names: Takáts
-    given-names: Zoltan
   - family-names: Murray
     given-names: Robert T.
 preferred-citation:
   type: article
   title: "Continuous-wave mid-infrared laser ablation enables high-resolution ambient mass spectrometry imaging"
-  status: submitted
-  journal: Nature Communications
   year: 2026
   # doi: TK        # article DOI, add on publication
   authors:

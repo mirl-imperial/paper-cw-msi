@@ -4,7 +4,7 @@ type: software
 title: "Code for: Continuous-wave mid-infrared laser ablation enables high-resolution ambient mass spectrometry imaging"
 version: 1.0.0
 license: MIT
-repository-code: "https://github.com/mirl-imperial/cw-msi-analysis-code"
+repository-code: "https://github.com/mirl-imperial/paper-cw-msi"
 # doi: TK        # software DOI, minted by Zenodo on release v1.0.0
 authors:
   - family-names: Francis

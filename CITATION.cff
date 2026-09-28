@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this code, please cite the associated article (preferred-citation below)."
 type: software
 title: "Code for: Continuous-wave mid-infrared laser ablation enables high-resolution ambient mass spectrometry imaging"
-version: 1.0.0
+version: 1.0.1
 license: MIT
 repository-code: "https://github.com/mirl-imperial/paper-cw-msi"
 # doi: TK        # software DOI, minted by Zenodo on release v1.0.0

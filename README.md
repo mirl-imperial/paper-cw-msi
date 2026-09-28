@@ -182,4 +182,4 @@ MIT (see `LICENSE`).
 
 ## Citation
 
-Please cite the associated article (see `CITATION.cff`). Software DOI: https://doi.org/TK.
+Please cite the associated article (see `CITATION.cff`). Software DOI: https://doi.org/10.5281/zenodo.23014277.

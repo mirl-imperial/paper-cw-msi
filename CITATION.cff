@@ -5,7 +5,7 @@ title: "Code for: Continuous-wave mid-infrared laser ablation enables high-resol
 version: 1.0.1
 license: MIT
 repository-code: "https://github.com/mirl-imperial/paper-cw-msi"
-# doi: TK        # software DOI, minted by Zenodo on release v1.0.0
+doi: 10.5281/zenodo.23014277
 authors:
   - family-names: Francis
     given-names: William J. C.
@@ -21,7 +21,7 @@ preferred-citation:
   type: article
   title: "Continuous-wave mid-infrared laser ablation enables high-resolution ambient mass spectrometry imaging"
   year: 2026
-  # doi: TK        # article DOI, add on publication
+  # doi:           # article DOI, add on publication
   authors:
     - family-names: Francis
       given-names: William J. C.

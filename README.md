@@ -6,7 +6,7 @@ Robert T. Murray
 
 This repository contains the custom code behind specific numbers and image panels in the
 manuscript (submitted to *Nature Communications*). The data are in Zenodo at
-https://doi.org/TK.
+https://doi.org/10.5281/zenodo.23011504.
 
 **Scope.** The repository holds only the calculations whose results cannot be read directly
 from the deposited data: the Fig. 4 image processing, the beam-diameter and
@@ -27,7 +27,7 @@ Figure numbers below refer to the submitted manuscript.
 
 ## Getting the data
 
-Download the Zenodo record (https://doi.org/TK) and unzip each section into one folder, e.g.
+Download the Zenodo record (https://doi.org/10.5281/zenodo.23011504) and unzip each section into one folder, e.g.
 `cw_msi_data/`, giving `cw_msi_data/01_MSI_HDI_processed_data/`,
 `cw_msi_data/05_beam_profile_knife_edge/`, `cw_msi_data/06_line_spread_function/`,
 `cw_msi_data/09_Fig4_HE_exports_and_landmarks/`, and so on. The paths below refer to that layout.

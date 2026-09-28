@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Demo outputs written to the working directory
+*_preview.png
+fig3_ion_images/
+
+# Data (download from Zenodo; do not commit)
+*.txt.gz
+*.imzML
+*.ibd
+*.ndpi
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Maintainer notes (not for the public repository)
+RELEASE_STEPS.md

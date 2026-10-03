@@ -1,6 +1,6 @@
-# Code for: Continuous-wave mid-infrared laser ablation enables high-resolution ambient mass spectrometry imaging
+# Code for: Continuous-wave laser ablation enables high-resolution ambient mass spectrometry imaging
 
-William J. C. Francis, Milena Micic, Lucy Noyes, David Blair, Anna Chauvet, Yayue Song,
+William J. C. Francis, Milena Micic, Lucy Noyes, David Blair, Anna Chauvet,
 Lauren Ford, Stefania Maneta-Stavrakaki, Dániel Simon, Ioannis Bitharas, Zoltan Takáts,
 Robert T. Murray
 
@@ -109,7 +109,7 @@ enhance_he_panel(image_rgb, pct_lo=1, pct_hi=99) -> enhanced_rgb_uint8
 The bottom 7% of the NDP.view export, which carries a burned-in scale bar, is cropped. Each
 RGB channel is then stretched linearly so that its 1st percentile maps to 0 and its 99th
 percentile to 255, with no other per-pixel operation. The unprocessed export is
-Supplementary Fig. 6.
+Supplementary Fig. 6f.
 ```
 python he_panel_contrast.py cw_msi_data/09_Fig4_HE_exports_and_landmarks/HE_exports/WILL_HE_MBI_OLF_2_Zoom.jpg
 ```
@@ -147,8 +147,8 @@ this way. HDImaging's own imzML export re-reads the raw file and writes full, un
 profile spectra (tens to 100+ GB), so this script works from the much smaller peak-picked
 export instead.
 
-**The script performs no centroiding, peak-picking or binning of its own, and applies no
-smoothing, filtering, resampling or intensity transform.** Peak picking was done upstream in
+The script performs no centroiding, peak-picking or binning of its own, and applies no
+smoothing, filtering, resampling or intensity transform. Peak picking was done upstream in
 HDImaging (Methods: 0.02 Da *m/z* window, mass-resolution setting 20,000), and the export
 already holds one shared peak list with each pixel's intensity at each of those *m/z* values.
 The script writes that peak list and the per-pixel intensities to imzML/ibd unchanged. Its
@@ -182,4 +182,4 @@ MIT (see `LICENSE`).
 
 ## Citation
 
-Please cite the associated article (see `CITATION.cff`). Software DOI: https://doi.org/10.5281/zenodo.23014277.
+Please cite the associated article (see `CITATION.cff`). Software DOI (all versions): https://doi.org/10.5281/zenodo.23013962.

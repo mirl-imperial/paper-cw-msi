@@ -1,11 +1,11 @@
 cff-version: 1.2.0
 message: "If you use this code, please cite the associated article (preferred-citation below)."
 type: software
-title: "Code for: Continuous-wave mid-infrared laser ablation enables high-resolution ambient mass spectrometry imaging"
-version: 1.0.1
+title: "Code for: Continuous-wave laser ablation enables high-resolution ambient mass spectrometry imaging"
+version: 1.0.2
 license: MIT
 repository-code: "https://github.com/mirl-imperial/paper-cw-msi"
-doi: 10.5281/zenodo.23014277
+doi: 10.5281/zenodo.23013962
 authors:
   - family-names: Francis
     given-names: William J. C.
@@ -19,9 +19,8 @@ authors:
     given-names: Robert T.
 preferred-citation:
   type: article
-  title: "Continuous-wave mid-infrared laser ablation enables high-resolution ambient mass spectrometry imaging"
+  title: "Continuous-wave laser ablation enables high-resolution ambient mass spectrometry imaging"
   year: 2026
-  # doi:           # article DOI, add on publication
   authors:
     - family-names: Francis
       given-names: William J. C.
@@ -33,8 +32,6 @@ preferred-citation:
       given-names: David
     - family-names: Chauvet
       given-names: Anna
-    - family-names: Song
-      given-names: Yayue
     - family-names: Ford
       given-names: Lauren
     - family-names: Maneta-Stavrakaki

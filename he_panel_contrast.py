@@ -26,8 +26,7 @@ def enhance_he_panel(image_rgb, pct_lo=1.0, pct_hi=99.0):
     image_rgb : array_like, shape (H, W, 3)
         RGB image, uint8 range (0-255).
     pct_lo, pct_hi : float
-        Lower/upper percentile (0-100) used for the per-channel linear
-        stretch, computed independently for each of the R, G, B channels.
+        Percentiles (0-100) mapped to 0 and 255 in each channel.
 
     Returns
     -------

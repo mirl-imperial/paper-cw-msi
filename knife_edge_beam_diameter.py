@@ -1,9 +1,8 @@
 """Focused-beam diameter from a knife-edge power-vs-position scan.
 
-A razor edge is translated across the focused beam in ~1 um steps while
-transmitted power is logged. Transmitted power vs edge position follows an
-error function whose 1/e^2 radius w gives the beam diameter D = 2w (the
-derivative of that erf is a Gaussian of 1/e^2 full-width D).
+A razor edge is translated across the focused beam in ~1 um steps while the
+transmitted power is logged. Power versus edge position is fitted to an error
+function with 1/e^2 radius w; the beam diameter is D = 2w.
 """
 from __future__ import annotations
 

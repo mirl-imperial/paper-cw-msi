@@ -37,21 +37,15 @@ def fit_coregistration(moving_points, target_points):
     Parameters
     ----------
     moving_points : array_like, shape (N, 2)
-        (x, y) landmark coordinates in the moving image (the image being
-        warped, e.g. the MSI ion image), each row paired with the
-        corresponding row of `target_points`.
+        (x, y) landmarks in the moving image (the ion image).
     target_points : array_like, shape (N, 2)
-        (x, y) landmark coordinates in the target image (the fixed
-        reference frame being warped into, e.g. the H&E image).
+        Paired (x, y) landmarks in the target image (the H&E).
 
     Returns
     -------
     dict with keys "tps_x", "tps_y"
-        Each a fitted `scipy.interpolate.RBFInterpolator` mapping
-        target-space (x, y) coordinates to the corresponding moving-space
-        x or y coordinate. Pass this dict as the `tps_transform` argument of
-        the functions in `he_overlay_render`. Swapping the two arguments
-        gives the inverse direction (moving to target).
+        `scipy.interpolate.RBFInterpolator`s mapping target (x, y) to moving
+        x and y. Swap the arguments for the inverse transform.
     """
     moving_points = np.asarray(moving_points, dtype=float)
     target_points = np.asarray(target_points, dtype=float)
@@ -62,12 +56,8 @@ def fit_coregistration(moving_points, target_points):
 
 
 def calibrate_pixel_pitch(moving_points, target_points, moving_pitch_um):
-    """Target-image pixel pitch from landmark-pair distances.
-
-    For every pair of landmarks, the physical distance between them is the
-    moving-image pixel distance times `moving_pitch_um`; dividing by the
-    target-image pixel distance gives one pitch estimate. The median over
-    all pairs is returned.
+    """Target-image pixel pitch: median over landmark pairs of the moving-image
+    distance times `moving_pitch_um`, divided by the target-image distance.
 
     Returns
     -------
@@ -99,8 +89,6 @@ if __name__ == "__main__":
     print(f"Loaded {len(moving_points)} active landmarks.")
     transform = fit_coregistration(moving_points, target_points)
 
-    # The thin-plate spline interpolates the landmarks exactly, so each target
-    # landmark should map back onto its paired moving landmark.
     pred_x = transform["tps_x"](target_points)
     pred_y = transform["tps_y"](target_points)
     residual = np.hypot(pred_x - moving_points[:, 0], pred_y - moving_points[:, 1])

@@ -1,29 +1,5 @@
-"""Ion images rendered in the H&E frame: RGB composites (Fig. 4a,b) and
+"""Ion images warped into the H&E frame: RGB composites (Fig. 4a,b) and
 single-ion overlays on a greyscale H&E backdrop (Fig. 4d-f).
-
-Ion images. The Fig. 4 ion images are 8-bit greyscale renders of the 3 um
-olfactory-bulb HDImaging export (Zenodo section 01): each channel's raster is
-scaled linearly from 0 to the 99.5th percentile of its non-zero pixels,
-clipped above, and rotated 90 degrees anticlockwise into HDImaging's display
-orientation, which is the pixel grid the BigWarp landmarks were placed on.
-`read_hdi_ion_images` and `ion_image_rgba` reproduce these renders exactly
-from the deposited export.
-
-Warping. `warp_ion_channel` applies an intensity transform in the ion image's
-own pixel grid, normalises to the 99th percentile of the transformed values
-over all pixels with non-zero signal, and resamples into the H&E frame by
-bilinear interpolation through the thin-plate-spline transform fitted by
-`he_overlay_coregistration.fit_coregistration`.
-
-RGB composites (Fig. 4a,b). Three linearly normalised channels are used
-directly as the R, G and B values, on black. Fig. 4a is warped into the tissue
-bounding box of the whole-section export; Fig. 4b into the zoom export.
-
-Single-ion overlays (Fig. 4d-f). Square-root transform before normalisation.
-Pixels below 0.12 of the normalised range are transparent; above it, colour
-(viridis) and opacity both ramp to full scale, opacity capped at 0.85. The
-backdrop is the Rec. 709 luminance of the contrast-stretched H&E (Fig. 4c),
-lightened by a uniform 45% blend toward white.
 """
 from __future__ import annotations
 
@@ -35,8 +11,7 @@ from scipy.ndimage import map_coordinates
 
 from he_panel_contrast import enhance_he_panel
 
-# Fig. 4 channels (3 um olfactory bulb): m/z of the peak-list channel, label,
-# RGB-composite channel (Fig. 4a,b) and single-ion overlay panel (Fig. 4d-f).
+# (m/z, label, RGB channel in Fig. 4a,b, overlay panel in Fig. 4d-f)
 FIG4_CHANNELS = [
     (790.5367, "PE 40:6 [M-H]-", "R", "f"),
     (134.0465, "adenine [M-H]-", "G", "d"),
@@ -44,28 +19,16 @@ FIG4_CHANNELS = [
 ]
 
 
-# ---------------------------------------------------------------- ion images
 def read_hdi_ion_images(path, target_mz, mz_tol=0.002):
     """Read selected channels of a Waters HDImaging peak-picked export (.txt).
 
-    The export has four header lines (line 4 is the shared m/z peak list),
-    then one row per pixel in acquisition order: pixel index, stage x (mm),
-    stage y (mm), one intensity per peak-list m/z, and two MassLynx
-    bookkeeping columns. The raster is rebuilt from the acquisition order:
-    x is the fast axis, and the raster width is the number of pixels before
-    the stage y position first changes.
-
-    Parameters
-    ----------
-    path : str or Path
-    target_mz : sequence of float
-        Each is matched to the nearest peak-list channel; a ValueError is
-        raised if none lies within `mz_tol` (Da).
+    The raster width is the number of pixels before the stage y position
+    first changes. Each target m/z is matched to the nearest peak-list
+    channel within `mz_tol` (Da).
 
     Returns
     -------
     dict {target_mz: ndarray (height, width), float32}
-        Full-precision ion images in acquisition-raster orientation.
     """
     with open(path, encoding="utf-8", errors="replace") as fh:
         header = [fh.readline() for _ in range(4)]
@@ -99,16 +62,13 @@ def read_hdi_ion_images(path, target_mz, mz_tol=0.002):
 def ion_image_rgba(raster, saturation_pct=99.5, rot90_k=1):
     """8-bit greyscale render of an ion image, as used to build Fig. 4.
 
-    The raster is rotated by `rot90_k` quarter turns anticlockwise (1 for the
-    3 um olfactory bulb, giving HDImaging's display orientation and the grid
-    of the deposited BigWarp landmarks), scaled linearly from 0 to the
-    `saturation_pct` percentile of its non-zero pixels, clipped above, and
-    mapped through Matplotlib's "gray" colour map to 8 bits.
+    The raster is rotated by `rot90_k` quarter turns anticlockwise (the
+    orientation the landmarks were placed in) and scaled linearly from 0 to
+    the `saturation_pct` percentile of its non-zero pixels, clipped above.
 
     Returns
     -------
     ndarray, shape (H, W, 4), uint8
-        R = G = B = grey level, alpha 255.
     """
     img = np.rot90(np.asarray(raster), rot90_k)
     vmax = float(np.percentile(img[img > 0], saturation_pct))
@@ -116,13 +76,8 @@ def ion_image_rgba(raster, saturation_pct=99.5, rot90_k=1):
 
 
 def _extract_intensity(ion_image):
-    """Reduce an ion image to a 2D float32 intensity array.
-
-    A 2D array is used as is. For an RGBA image with a non-constant alpha
-    channel, alpha is taken as the intensity; otherwise the Rec. 709
-    luminance of the RGB channels is used (for a greyscale render, the grey
-    level).
-    """
+    """2D intensity from an ion image: the array itself, a non-constant alpha
+    channel, or the Rec. 709 luminance of the RGB channels."""
     ion_image = np.asarray(ion_image)
     if ion_image.ndim == 2:
         return ion_image.astype(np.float32)
@@ -148,7 +103,6 @@ def _apply_intensity_transform(intensity, transform, log_offset=1.0):
     raise ValueError(f"unknown intensity transform {transform!r}")
 
 
-# ---------------------------------------------------------------- warping
 def warp_ion_channel(
     ion_image,
     tps_transform,
@@ -205,7 +159,6 @@ def warp_ion_channel(
     return np.clip(normed, 0.0, 1.0) * in_bounds
 
 
-# ---------------------------------------------------------------- Fig. 4d-f
 def render_ion_overlay(
     ion_image,
     tps_transform,
@@ -286,7 +239,6 @@ def composite_over_backdrop(grey_backdrop, overlay):
     return bg * (1.0 - alpha) + overlay[..., :3] * alpha
 
 
-# ---------------------------------------------------------------- Fig. 4a,b
 def tissue_bbox(he_rgb, threshold=215, margin_frac=0.04):
     """Bounding box of the largest tissue region in an H&E image.
 
@@ -317,24 +269,12 @@ def tissue_bbox(he_rgb, threshold=215, margin_frac=0.04):
 
 
 def render_rgb_composite(red, green, blue):
-    """Stack three normalised channels (from `warp_ion_channel` with
-    `intensity_transform="linear"`) into an RGB image, black where there is
-    no signal. No signal floor or opacity is applied.
-
-    Returns
-    -------
-    ndarray, shape (H, W, 3), values in [0, 1]
-    """
+    """Stack three normalised channels into an RGB image, values in [0, 1]."""
     return np.stack([np.asarray(c) for c in (red, green, blue)], axis=-1)
 
 
 def region_outline(region_shape, region_transform, whole_inverse_transform, crop_origin_xy):
-    """Outline of one H&E export's footprint, drawn on another (Fig. 4a box).
-
-    The four corners of the region export are mapped into the ion image
-    through the region's transform (target to ion image), then into the
-    whole-section export through the inverse whole-section transform (ion
-    image to target), and shifted by the whole-section crop origin.
+    """Footprint of the region export on the whole-section crop (Fig. 4a box).
 
     Parameters
     ----------
@@ -393,7 +333,6 @@ if __name__ == "__main__":
     ions = {mz: ion_image_rgba(raster) for mz, raster in rasters.items()}
     by_rgb = {ch[2]: ch[0] for ch in FIG4_CHANNELS}
 
-    # Fig. 4a: RGB composite, whole section, tissue-bounding-box crop.
     whole_he = np.asarray(Image.open(coreg / "HE_exports" / "OLF_Ablated.jpg").convert("RGB"))
     whole_moving, whole_target = load_bigwarp_landmarks(
         coreg / "bigwarp_landmarks" / "landmarksCW_OLF.csv"
@@ -407,7 +346,6 @@ if __name__ == "__main__":
     ])
     save(fig4a, "fig4a_rgb_composite.png")
 
-    # Fig. 4b-f share the zoom export and its landmark set.
     zoom_he = crop_bottom_fraction(
         np.asarray(Image.open(coreg / "HE_exports" / "WILL_HE_MBI_OLF_2_Zoom.jpg").convert("RGB")),
         0.07,

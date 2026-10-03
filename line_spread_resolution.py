@@ -1,10 +1,9 @@
-"""Spatial resolution from a line-spread-function (step-edge) fit.
+"""Spatial resolution from a step-edge fit.
 
-An ideal step blurred by a Gaussian point-spread function of standard
-deviation sigma (Zhang & Bergholm, Int. J. Comput. Vis. 24, 219-250, 1997),
-fit to an intensity profile sampled across a tissue step edge, reported as a
-16-84% (+/-1 sigma) rise-distance resolution metric per the convention of
-Kompauer et al. (Nat. Methods, 2017).
+An intensity profile across a tissue edge is fitted to an ideal step blurred
+by a Gaussian of standard deviation sigma (Zhang & Bergholm, Int. J. Comput.
+Vis. 24, 219-250, 1997). Resolution is the 16-84% rise distance (Kompauer et
+al., Nat. Methods 14, 90-96, 2017).
 """
 from __future__ import annotations
 
@@ -16,7 +15,6 @@ LOW_FRAC, HIGH_FRAC = 0.16, 0.84
 
 
 def _edge_model(x, low, high, x0, sigma):
-    """Error-function edge model: an ideal step blurred by a Gaussian PSF."""
     return low + (high - low) * 0.5 * (1 + erf((x - x0) / (np.sqrt(2) * sigma)))
 
 

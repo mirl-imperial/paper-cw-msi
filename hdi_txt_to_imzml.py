@@ -1,70 +1,26 @@
-"""
-Convert a Waters HDImaging (Maldichrom) peak-picked pixel export (.txt) into a
-centroid imzML + .ibd pair, readable by any imzML-consuming tool.
+"""Convert a Waters HDImaging peak-picked pixel export (.txt) to centroid imzML.
 
-Background
-----------
-Waters HDImaging's own "export to imzML" button (HDI v1.4 / ImzmlConverter
-v0.5, and likely other versions) re-reads the raw file and writes out full
-profile spectra -- it does NOT use HDI's own peak-picked ("Number of Peaks")
-data, and the resulting files are enormous (tens to 100+ GB).
+HDImaging's own imzML export writes full profile spectra. The tab-delimited
+.txt export from the Process tab instead holds one shared m/z peak list and
+each pixel's intensity at those peaks; this script writes it to a
+continuous-mode centroid imzML + .ibd pair without changing any values.
 
-HDI's Process tab (Maldichrom) separately produces a tab-delimited .txt
-export: one shared m/z peak list for the whole image (the top N most intense
-peaks, chosen during processing), with per-pixel intensities at each of those
-peaks. That IS centroided data, and is usually orders of magnitude smaller.
-This script converts that .txt export directly into a proper centroid imzML,
-without ever touching the enormous profile export.
+.txt format (HDImaging v1.4):
+    line 1    title or blank (unused)
+    line 2    summed spectrum (unused)
+    line 3    peak indices 1..N
+    line 4    the N peak m/z values
+    line 5+   one row per pixel: pixel index, stage x (mm), stage y (mm),
+              N intensities, then two MassLynx function/scan columns, which
+              are not pixel coordinates.
 
-.txt format (confirmed against Waters HDImaging v1.4 Maldichrom output,
-across multiple acquisitions/instruments)
-------------------------------------------------------------------------
-Line 1: blank, or a free-text title (e.g. "Default file") -- content unused
-        either way, only its presence as one line matters.
-Line 2: summed/reference-spectrum row, index "0" -- ignored.
-Line 3: peak index header (1..N) -- used only to count N peaks.
-Line 4: the N peak m/z values -- this is the single shared m/z axis.
-Line 5+: one row per pixel:
-    col 0       : pixel index (1-based, sequential in acquisition order)
-    col 1       : stage x position (mm) -- resets to zero at
-                  the start of every scan line, so NOT ignorable: the gap
-                  between consecutive resets is the true raster width. The
-                  script uses this as an automatic cross-check against
-                  --width and warns on a mismatch (see
-                  _count_and_detect_width) -- but --width is still required
-                  up front, since this reset pattern isn't guaranteed for
-                  every possible HDI export (e.g. if col 1 is genuinely
-                  something else on a different instrument/version).
-    col 2       : stage y position (mm), constant along a scan line -- ignored
-    col 3..3+N-1: the N intensities, aligned to the line-4 m/z list
-    last 2 cols : MassLynx function/scan-number bookkeeping -- NOT spatial
-                  coordinates, despite looking like they might be. (Function
-                  is constant; "scan number" just duplicates col 0.) Do not
-                  use these for pixel position -- confirmed by cross-checking
-                  against ground-truth positions in an independently-exported
-                  profile imzML for the same raw file, where these two
-                  trailing columns stayed constant for >2000 consecutive
-                  pixels despite the true raster width being ~1000-1300 px.
+Pixel positions come from the acquisition order and the raster geometry
+(imzML scan-settings conventions; defaults are HDImaging's top-down, one-way,
+left-to-right horizontal raster). --width is required; it is checked against
+the stage x column, which resets at the start of each scan line.
 
-Pixel (x, y) coordinates are reconstructed from the acquisition order (col 0)
-plus the known raster geometry, using the same scan-order convention as
-imzML's own IMS scan-settings CV terms (--scan-direction,
---line-scan-direction, --scan-pattern, --scan-type). Defaults match HDI's
-standard raster (top-down, one-way, horizontal lines, left-to-right) --
-override them if a given acquisition used a different pattern. --width is
-always required as an explicit argument (by design, so this stays robust to
-HDI outputs where the column-1 reset pattern above doesn't hold) but is
-cross-checked against that reset pattern when available, with a warning on
-mismatch. --height is inferred from pixel count / width if not given, and
-checked for an exact match.
-
-Usage
------
     python hdi_txt_to_imzml.py INPUT.txt OUTPUT_STEM \\
         --width 1033 --pixel-size 3 --polarity negative
-
-Produces OUTPUT_STEM.imzML + OUTPUT_STEM.ibd (continuous mode, centroid
-spectra). Requires: numpy, pyimzml (`pip install pyimzml`).
 """
 
 from __future__ import annotations
@@ -87,8 +43,8 @@ def pixel_index_to_xy(i0, width, height, scan_direction, line_scan_direction,
     else:
         raise ValueError(f"unknown scan_type: {scan_type}")
 
-    line_no = i0 // line_len          # 0-based line number, in acquisition order
-    pos_in_line = i0 % line_len       # 0-based position along the line
+    line_no = i0 // line_len
+    pos_in_line = i0 % line_len
 
     base_reversed = line_scan_direction in ("line_right_left", "line_bottom_up")
     if scan_pattern == "meandering" and line_no % 2 == 1:
@@ -108,12 +64,9 @@ def pixel_index_to_xy(i0, width, height, scan_direction, line_scan_direction,
 
 
 def _count_and_detect_width(f):
-    """Counts data rows, and independently cross-checks the raster width by
-    watching column 1 (stage x position, mm): it resets to zero
-    at the start of every scan line, so the gap between consecutive resets
-    is the true line width. Returns (n_pixels, detected_width_or_None) --
-    None if the resets aren't perfectly uniform (unexpected format/scan
-    pattern), in which case the caller falls back to trusting --width alone.
+    """Return (n_pixels, width), with width taken from the stage x resets.
+
+    width is None if the resets are not evenly spaced.
     """
     n_pixels = 0
     prev_t = None
@@ -141,12 +94,10 @@ def convert(txt_path, out_path, width, pixel_size, height=None,
     t0 = time.time()
 
     def open_data_rows():
-        """Yields (n_peaks, mzs, row_iterator) -- reopens the file so this
-        can be called twice (once to count pixels, once to stream them)
-        without holding the whole file in memory."""
+        """Open the export past its header; return (file, n_peaks, mzs)."""
         f = open(txt_path, "r", encoding="utf-8", errors="strict")
-        f.readline()  # line 1: blank, or a title such as "Default file" -- unused
-        f.readline()  # summed-spectrum / reference row -- unused
+        f.readline()
+        f.readline()
         row_idx = f.readline().rstrip("\n").split("\t")
         row_mz = f.readline().rstrip("\n").split("\t")
         n_peaks = len([c for c in row_idx[3:] if c != ""])
@@ -166,10 +117,7 @@ def convert(txt_path, out_path, width, pixel_size, height=None,
         if detected_width is not None and detected_width != width:
             print(
                 f"WARNING: --width {width} does not match the raster width "
-                f"({detected_width}) detected from column 1 (stage x "
-                f"position) resetting to zero at the start of each scan line. "
-                f"Double-check --width -- {detected_width} looks more "
-                f"likely to be correct."
+                f"{detected_width} detected from the stage x column."
             )
     f.close()
 
@@ -224,8 +172,7 @@ def convert(txt_path, out_path, width, pixel_size, height=None,
 
 
 def _inject_pixel_size(out_path, pixel_size_x, pixel_size_y):
-    # pyimzml's ImzMLWriter does not emit IMS:1000046/47 (pixel size) itself;
-    # patch it into the scanSettings block it already wrote.
+    # pyimzML does not write the pixel size (IMS:1000046/47); add it to scanSettings.
     imzml_path = out_path if out_path.endswith(".imzML") else out_path + ".imzML"
     with open(imzml_path, "r", encoding="ISO-8859-1") as f:
         xml = f.read()
@@ -247,19 +194,15 @@ def _inject_pixel_size(out_path, pixel_size_x, pixel_size_y):
 def main():
     p = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("input_txt", help="HDImaging Maldichrom .txt pixel export")
-    p.add_argument("output_stem", help="output path without extension "
-                                        "(writes OUTPUT_STEM.imzML + .ibd)")
-    p.add_argument("--width", type=int, required=True,
-                   help="raster width in pixels (required -- cannot be "
-                        "recovered reliably from the .txt file)")
+    p.add_argument("input_txt", help="HDImaging .txt pixel export")
+    p.add_argument("output_stem", help="output path without extension")
+    p.add_argument("--width", type=int, required=True, help="raster width in pixels")
     p.add_argument("--height", type=int, default=None,
-                   help="raster height in pixels (default: inferred from "
-                        "pixel count / width, and checked)")
+                   help="raster height in pixels (default: pixel count / width)")
     p.add_argument("--pixel-size", type=float, required=True,
-                   help="pixel size in micrometers (x)")
+                   help="pixel size in micrometres (x)")
     p.add_argument("--pixel-size-y", type=float, default=None,
-                   help="pixel size in micrometers (y), default: same as --pixel-size")
+                   help="pixel size in micrometres (y), default: --pixel-size")
     p.add_argument("--polarity", choices=["positive", "negative"], required=True)
     p.add_argument("--scan-direction", choices=["top_down", "bottom_up"],
                    default="top_down")
@@ -272,7 +215,7 @@ def main():
     p.add_argument("--scan-type", choices=["horizontal_line", "vertical_line"],
                    default="horizontal_line")
     p.add_argument("--limit", type=int, default=None,
-                   help="only convert the first N pixels (for testing)")
+                   help="convert only the first N pixels")
     args = p.parse_args()
 
     convert(args.input_txt, args.output_stem, args.width, args.pixel_size,

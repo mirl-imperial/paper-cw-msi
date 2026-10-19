@@ -5,7 +5,7 @@ Lauren Ford, Stefania Maneta-Stavrakaki, Dániel Simon, Ioannis Bitharas, Zoltan
 Robert T. Murray
 
 This repository contains the custom code behind specific numbers and image panels in the
-manuscript (submitted to *Nature Communications*). The data are in Zenodo at
+manuscript. The data are in Zenodo at
 https://doi.org/10.5281/zenodo.23011504.
 
 **Scope.** The repository holds only the calculations whose results cannot be read directly
